@@ -91,6 +91,41 @@ namespace MCPForUnity.Editor.Services
             }
         }
 
+        public async Task<TestRunResult> RunSingleTestAsync(TestMode mode, string testName)
+        {
+            await _operationLock.WaitAsync().ConfigureAwait(false);
+            Task<TestRunResult> runTask;
+            try
+            {
+                if (_runCompletionSource != null && !_runCompletionSource.Task.IsCompleted)
+                {
+                    throw new InvalidOperationException("A Unity test run is already in progress.");
+                }
+
+                _leafResults.Clear();
+                _runCompletionSource = new TaskCompletionSource<TestRunResult>(TaskCreationOptions.RunContinuationsAsynchronously);
+
+                var filter = new Filter { testMode = mode, testNames = new[] { testName } };
+                _testRunnerApi.Execute(new ExecutionSettings(filter));
+
+                runTask = _runCompletionSource.Task;
+            }
+            catch
+            {
+                _operationLock.Release();
+                throw;
+            }
+
+            try
+            {
+                return await runTask.ConfigureAwait(true);
+            }
+            finally
+            {
+                _operationLock.Release();
+            }
+        }
+
         public void Dispose()
         {
             try

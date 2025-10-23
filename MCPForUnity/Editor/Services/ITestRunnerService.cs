@@ -19,5 +19,10 @@ namespace MCPForUnity.Editor.Services
         /// Execute tests for the supplied mode.
         /// </summary>
         Task<TestRunResult> RunTestsAsync(TestMode mode);
+
+        /// <summary>
+        /// Execute a single test by name for the supplied mode.
+        /// </summary>
+        Task<TestRunResult> RunSingleTestAsync(TestMode mode, string testName);
     }
 }
