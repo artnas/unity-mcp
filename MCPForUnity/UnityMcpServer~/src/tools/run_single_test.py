@@ -1,6 +1,6 @@
 from typing import Annotated, Literal, Any
 
-from mcp.server.fastmcp import Context
+from fastmcp import Context
 from pydantic import BaseModel, Field
 
 from models import MCPResponse
@@ -58,4 +58,12 @@ async def run_single_test(
     response = await async_send_command_with_retry("run_single_test", params)
     await ctx.info(f"Response {response}")
 
-    return RunSingleTestResponse(**response) if isinstance(response, dict) else response
+    # If response is already an MCPResponse (e.g., from an exception), return it directly
+    if isinstance(response, MCPResponse):
+        return response
+    # Otherwise, create RunSingleTestResponse from the dict
+    elif isinstance(response, dict):
+        return RunSingleTestResponse(**response)
+    else:
+        # Fallback for unexpected response types
+        return RunSingleTestResponse(success=False, error=f"Unexpected response type: {type(response)}")
